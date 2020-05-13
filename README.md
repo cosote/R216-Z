@@ -1,7 +1,10 @@
 # R216-Z
 Tools for Vodafone R216-Z (ZTE MF910)
 
-As I couldn't find any usefull information how to fix this Vodafone R216-Z bug, that network connection is not initiated automatically, I've created a small tool to push 2 scripts onto the device to fix that. Now, after reboot or resuming from sleep, internet connection is immediately established.
+As I couldn't find any usefull information how to fix this Vodafone R216-Z bug, that network connection is not initiated automatically, I've created a small tool to push 2 scripts onto the device to fix that. Now, after reboot or resuming from sleep, internet connection is immediately established. 
+
+Donations are welcome :)<br>
+[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=83VK6A6D3MCRS&source=url)
 
 Just USB connect the R216-Z your Windows computer and launch R216-Z_patch.bat to push the patch to the device.
 With R216-Z_patch.bat remove, you can un-install the patch again.
