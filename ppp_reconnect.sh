@@ -9,7 +9,7 @@
 # Description:       Checks every 3 seconds on disconnected status and issues connect. Uses busybox nc.
 ### END INIT INFO
 
-# Author: 2020-05-02 Jens Bornemann, jbornema@gmail.com
+# Author: 2020-05-02 cosote@gmail.com
 
 EPOCH=0
 
