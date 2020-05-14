@@ -28,21 +28,27 @@ adb.exe push ppp_reconnect.sh /etc/
 echo.
 echo Done. Please reboot R216-Z.
 echo.
+choice /m "Do you want to reboot the R216-Z"
+if errorlevel 2 goto :patch_end
+echo Rebooting R216-Z...
+adb.exe shell reboot
+:patch_end
+echo.
 echo Info:
-echo Run command: "%0" remove
+echo Run command: %0 remove
 echo to remove patch from R216-Z again.
-goto :EOF
+goto :END
 
 :cannot_patch
 echo Error: Cannot create directory!
 echo Patch is already installed or system files exist and might be overwritten.
 choice /m "Do you want to continue"
-if errorlevel 2 goto :EOF
+if errorlevel 2 goto :END
 goto :continue_patch
 
 :cannot_connect
 echo Error: Cannot connect to R216-Z!
-goto :EOF
+goto :END
 
 :remove
 echo.
@@ -53,4 +59,8 @@ adb.exe shell rmdir /usr/ui/
 adb.exe shell pkill -f "sh /etc/ppp_reconnect.sh"
 echo.
 echo Done.
-goto :EOF
+goto :END
+
+:END
+echo.
+pause
