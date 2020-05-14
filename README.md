@@ -9,7 +9,7 @@ Donations are welcome :)<br>
 Just USB connect the R216-Z to your Windows computer and launch R216-Z_patch.bat to push the patch to the device.
 With R216-Z_patch.bat remove, you can un-install the patch again. Ensure you have setup **admin** as your administrative password of the R216-Z device (that is the default password).
 
-The script runs as a background process and checks every 3 Seconds if it was rebootet or resumed from sleep and initiates then CONNECT_NETWORK command if it is disconnected.
+The script runs as a background process on the R216-Z device and checks every 3 Seconds if it was rebootet or resumed from sleep and initiates then CONNECT_NETWORK command if it is disconnected. Please reboot the R216-Z device after you've pushed it.
 
 Required drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951)
 
