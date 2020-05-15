@@ -11,7 +11,7 @@ With R216-Z_patch.bat remove, you can un-install the patch again. Ensure you hav
 
 The script runs as a background process on the R216-Z device and checks every 3 Seconds if it was rebootet or resumed from sleep and initiates then CONNECT_NETWORK command if it is disconnected. Please reboot the R216-Z device after you've pushed it.
 
-Required drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951)
+Drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951) but should not be required for the patch tool.
 
 Please find here some links about Vodafone R216-Z device:
 - https://github.com/kristrev/zte-mf910-scripts
