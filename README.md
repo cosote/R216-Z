@@ -15,6 +15,10 @@ The script runs as a background process on the R216-Z device and checks every 3 
 Drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951) but should not be required for the patch tool.
 
 Please find here some links about Vodafone R216-Z device:
+- Device source code
+  - http://download.ztedevices.com/device/global/support/opensource/7/109/Vodafone_R216-Z_opensource_code.tar.gz
+  - http://download.ztedevices.com/device/global/support/opensource/7/20170415_01/Vodafone_R216-ZV4.3_opensource_code.tar.gz
+  - http://download.ztedevices.com/device/global/support/opensource/7/20181025_01/Vodafone_R216-ZV4.4_opensource_code.tar
 - https://github.com/kristrev/zte-mf910-scripts
 - https://kristrev.github.io/2016/07/21/making-the-zte-mf910-play-nice
 - https://wiki.archlinux.org/index.php/ZTE_MF_823_(Megafon_M100-3)_4G_Modem
