@@ -20,7 +20,7 @@ It also checks every 2 Minutes for network connection and initiates a connect, i
 ## Additional information and links
 Drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951) but should not be required for the patch tool.
 
-I've not updated my Vodafone Verion 4.0 devices (QPEST tool should work, or adb reboot bootloader, but didn't get any further... any additional detailed information would be helpful), but please find here some links about Vodafone R216-Z device:
+I've not updated my Vodafone Verion 4.0 devices (QPST tool should work, or adb reboot bootloader, but didn't get any further... any additional detailed information would be helpful), but please find here some links about Vodafone R216-Z device:
 - Firmware 4.1 from vodafone.nl (couldn't install though, but thx @1ras for your comments and the super cool DB patch, I've added that to this tool)
   - https://www.vodafone.nl/content/dam/vodafone/downloads/software/r216_z_mobilewifi_firmware_v4.1.exe
 - Debranding firmware (unverified!) or updating/reverting to Version 4.2, 4.0...
