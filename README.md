@@ -10,12 +10,14 @@ Thx to @1ras, I've also added the update of apn_list database with Telekom, Tele
 Donations are welcome :)<br>
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=83VK6A6D3MCRS&source=url)
 
+## Installation
 Just USB connect the R216-Z to your Windows computer, connect to it's WLAN and launch R216-Z_patch.bat (<a href="https://github.com/cosote/R216-Z/archive/refs/tags/R216-Z_patch_v0.2.zip"><img valign="bottom" src="https://img.shields.io/github/downloads/cosote/R216-Z/latest/total"></a>) to push the patch to the device.
 With R216-Z_patch.bat remove, you can un-install the patch again. Ensure you have setup **admin** as your administrative password of the R216-Z device (that is the default password).
 
 The script runs as a background process on the R216-Z device and checks every 5 Seconds if it was rebootet or resumed from sleep and initiates then CONNECT_NETWORK command if it is disconnected. Please reboot the R216-Z device after you've pushed it.
-It also checks every 2 Minutes for network connection and initiates a connect, if not connected. If internet becomes unavailable for 15 Minutes, the device reboots (or every 45 Minutes, when it never internet since boot).
+It also checks every 2 Minutes for network connection and initiates a connect, if not connected. If internet becomes unavailable for 15 Minutes, the device reboots (or every 45 Minutes, when it never had internet access since boot).
 
+## Additional information and links
 Drivers for R216-Z can be found here: [2015010810282162.zip](http://download.pcdcdn.com/download.php?file=f0ccf6b7e75ec4c92e651dfbef4e3951) but should not be required for the patch tool.
 
 I've not updated my Vodafone Verion 4.0 devices (QPEST tool should work, or adb reboot bootloader, but didn't get any further... any additional detailed information would be helpful), but please find here some links about Vodafone R216-Z device:
