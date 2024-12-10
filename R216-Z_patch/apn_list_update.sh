@@ -1,0 +1,14 @@
+#!/bin/sh
+if [[ "$1" = "add" ]]; then
+  # All columns of table apn_list are type TEXT, list of column: CCMNC ConfigFileName	UserName	Password	LoginNumber	AutoGetAPN	APN	AutoGetDNS	MainDNS	StandbyDNS	AutoGetPDP	PDPAddress	PDPType	AuthType	AskUserAndPwd	SaveUserAndPwd	AccountType	ReportingAccountType	APNlogic	TimeZone	ShortName	HomePage	Priority	WalledGardenAPN	Editable	AutoConnect
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26201','Telekom Deutschland','','','*99#','0','internet.telekom','1','','','1','','IPv4v6','PAP','0','0','Telekom Deutschland','Contract','Yes','60','Telekom Deutschland','www.telekom.de','0','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26201' and APN='internet.telekom') = 0;"
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26203','Telefonica','','','*99#','0',' internet','1','','','1','','IPv4v6','PAP','0','0','Telefonica Contract','Contract','Yes','60','Telefonica','www.telefonica.de','0','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26203' and APN=' internet') = 0;"
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26203','Telefonica','','','*99#','0','pinternet.interkom.de','1','','','1','','IPv4v6','PAP','0','0','Telefonica Prepaid','Prepaid','Yes','60','Telefonica','www.telefonica.de','1','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26203' and APN='pinternet.interkom.de') = 0;"
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26207','o2','','','*99#','0','internet','1','','','1','','IPv4v6','PAP','0','0','o2 Contract','Contract','Yes','60','o2','www.o2online.de','0','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26207' and APN='internet') = 0;"
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26207','o2','','','*99#','0','pinternet.interkom.de','1','','','1','','IPv4v6','PAP','0','0','o2 Prepaid','Prepaid','Yes','60','o2','www.o2online.de','1','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26207' and APN='pinternet.interkom.de') = 0;"
+  sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "INSERT INTO apn_list SELECT '26223','1&1','','','*99#','0','internet','1','','','1','','IPv4v6','PAP','0','0','1&1 Prepaid','Prepaid','Yes','60','1&1','www.1&1.de','0','','Yes','Yes' WHERE (SELECT count(1) FROM apn_list WHERE CCMNC='26223' and APN='internet') = 0;"
+else
+  if [[ -f "/usr/zte_web/web/auto_apn/auto_apn_backup.db" ]]; then
+    echo Additional APN configured: $(sqlite3 /usr/zte_web/web/auto_apn/auto_apn.db "attach database '/usr/zte_web/web/auto_apn/auto_apn_backup.db' as bak;select GROUP_CONCAT(distinct ConfigFileName) from apn_list where ConfigFileName not in (select distinct ConfigFileName from bak.apn_list)")
+  fi
+fi
