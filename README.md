@@ -11,7 +11,7 @@ Donations are welcome :)<br>
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=83VK6A6D3MCRS&source=url)
 
 ## Installation
-Just USB connect the R216-Z to your Windows computer, connect to it's WLAN and launch R216-Z_patch.bat (<a href="https://github.com/cosote/R216-Z/archive/refs/tags/R216-Z_patch_v0.2.zip"><img valign="bottom" src="https://img.shields.io/github/downloads/cosote/R216-Z/total"></a>) to push the patch to the device.
+Just USB connect the R216-Z to your Windows computer, connect to it's WLAN and launch R216-Z_patch.bat <a href="https://github.com/cosote/R216-Z/archive/refs/tags/R216-Z_patch_v0.2.zip"><img valign="bottom" src="https://img.shields.io/github/downloads/cosote/R216-Z/total"></a> to push the patch to the device.
 With R216-Z_patch.bat remove, you can un-install the patch again. Ensure you have setup **admin** as your administrative password of the R216-Z device (that is the default password).
 
 The script runs as a background process on the R216-Z device and checks every 5 Seconds if it was rebootet or resumed from sleep and initiates then CONNECT_NETWORK command if it is disconnected. Please reboot the R216-Z device after you've pushed it.
