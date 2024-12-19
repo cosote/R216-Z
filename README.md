@@ -7,6 +7,8 @@ I've updated the script to also reboot the device, if no internet connection is 
 I had another issue that internet after 2-3 days of constant use stopped working: mobile connect was established (LED on), WiFi also, IP all good, but internet was not accessible - only rebooting device fixed the issue...
 Thx to @1ras, I've also added the update of apn_list database with Telekom, Telefonica, o2 and 1&1. This should make the original re-connect script opsolete, you can choose.
 
+An SMS to email forwarding feature is now also available (tested just with Gmail).
+
 Donations are welcome :)<br>
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=83VK6A6D3MCRS&source=url)
 
@@ -23,7 +25,7 @@ You can also ssh into the device with 'root' and password 'zte9x15'.
 
 I've not updated my Vodafone Verion 4.0 devices (QPST tool should work, or adb reboot bootloader, but didn't get any further... any additional detailed information would be helpful), but please find here some links about Vodafone R216-Z device:
 - Firmware 4.1 from vodafone.nl (couldn't install though, but thx @1ras for your comments and the super cool DB patch, I've added that to this tool)
-  - https://www.vodafone.nl/content/dam/vodafone/downloads/software/r216_z_mobilewifi_firmware_v4.1.exe
+  - https://www.vodafone.nl/content/dam/vodafone/downloads/software/r216_z_mobilewifi_firmware_v4.1.exe (https://www.vodafone.nl/zakelijk/support/business-services/software-en-downloads)
 - Debranding firmware (unverified!) or updating/reverting to Version 4.2, 4.0...
   - Flash tool: https://3ginfo.ru/downloads1739.html, https://forum.gsmhosting.com/vbb/f844/zte-mf910-firmware-flasher-2156390/
   - Firmware 4.0 with instructions: https://drive.google.com/file/d/1HUKdVe7-za2PC2JwXXMAwDCBq1cGPQYF, https://firmwarefile.com/zte-r216-z
