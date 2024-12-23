@@ -59,10 +59,14 @@ check_network_status() {
   fi
 }
 
+queue_send_update() {
+  SEND_UPDATES="$SEND_UPDATES|$1"
+}
+
 send_update() {
   if [[ -f /etc/sendmail.sh ]] && [[ -f /etc/sendmail.conf ]]; then
-    if [[ $CONNECTED -eq 1 ]]; then
-      sh /etc/sendmail.sh "R216-Z: $1"
+    if [[ $HAS_INTERNET -eq 1 ]]; then
+      sh /etc/sendmail.sh "$1" "$2"
       if [[ $? -ne 0 ]]; then
         SEND_UPDATES="$SEND_UPDATES|$1"
       fi
@@ -74,7 +78,7 @@ send_update() {
 
 msg="$NOW: Running $0"
 echo $msg
-send_update "$msg"
+queue_send_update "$msg"
 
 while [ 1 ]
 do
@@ -93,7 +97,7 @@ do
       RESULT=$( echo -ne "POST /goform/goform_set_cmd_process HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\nContent-Length: ${#BODY}\n\n${BODY}" | nc $HOST 80 | grep -o "{.*}" )
       msg="$NOW: Connect command result: $RESULT"
       echo $msg
-      send_update "$msg"
+      queue_send_update "$msg"
       # So, Re-check network status
       if check_network_status; then
         CONNECTED=1
@@ -117,7 +121,7 @@ do
     if [[ ${#MY_IP} -eq 0 ]]; then
       msg="$NOW: My ip address not available using $MYIP_SITE"
       echo $msg
-      send_update "$msg"
+      queue_send_update "$msg"
       # no IP received, check google.com
       TEST_INTERNET=$(wget -q -T 5 -O - $ALT_SITE 2>/dev/null)
       if [[ ${#TEST_INTERNET} -eq 0 ]]; then
@@ -135,7 +139,7 @@ do
       HAD_ONCE_INTERNET=1
       HAS_INTERNET=1
       if ! [[ "$LAST_IP_ADDRESS" = "$MY_IP" ]]; then
-        send_update "$NOW: New IP address assigned: $MY_IP"
+        queue_send_update "$NOW: New IP address assigned: $MY_IP"
       fi
       LAST_IP_ADDRESS=$MY_IP
     fi
@@ -145,7 +149,6 @@ do
       HAS_INTERNET=0
       msg="$NOW: Rebooting system..."
       echo $msg
-      send_update "$msg"
       reboot
     fi
   fi
@@ -160,11 +163,26 @@ do
   SEND_UPDATES=
   OIFS="$IFS"
   IFS='|'
+  BODY=
+  I=0
   for msg in $updates; do
     if ! [[ -z "$msg" ]]; then
-      send_update "$msg"
+      I=$((I + 1))
+      if [[ $I -gt 1 ]]; then
+        BODY="$BODY"$'\n'"$msg"
+      else
+        BODY="$msg"
+      fi
     fi
   done
+  if [[ $I -gt 0 ]]; then
+    if [[ $I -eq 1 ]]; then
+      send_update "$BODY" "$BODY"
+    else
+      send_update "Multiple notifications" "$BODY"
+    fi
+  fi
+  
   IFS="$OFS"
   
   LAST_CYCLE=$NOW

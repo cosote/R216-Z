@@ -3,6 +3,8 @@ set device=MF910_ZTED000000
 set adb=adb\adb.exe -s %device%
 set curl=curl\curl.exe
 
+rem If not starting adb server first, the devices -l command might hang...
+%adb% start-server
 for /F "delims=" %%i in ('%adb% -s %device% devices -l^|find "%device%"') do goto :device_connected
 
 echo Verify login with password admin on R216-Z...
@@ -45,6 +47,8 @@ for /f "tokens=*" %%a in ('%adb% shell mkdir /usr/ui/^|find /i "File exists"') d
 echo.
 %adb% push startdui.sh /usr/ui/
 %adb% push ppp_reconnect.sh /etc/
+%adb% push sendmail.sh /etc/
+%adb% push sms_email_forward.sh /etc/
 set reboot=reboot
 goto :auto_reconnect_patch
 
@@ -69,6 +73,8 @@ echo You can forward (and delete) incoming SMS to email.
 echo You need to configure the from-email, smtp details and to-email.
 choice /m "Do you want to deploy this feature"
 if errorlevel 2 goto :%reboot%
+set /p "subject_prefix=Email subject prefix (default R216-Z): "
+if [%subject_prefix%]==[] set subject_prefix=R216-Z
 set /p "email_from=Enter from-email: "
 set email_default_smtp_account=%email_from%
 for /f "tokens=2 delims=@" %%a in ("%email_from%") do (
@@ -84,17 +90,16 @@ if [%email_to%]==[] set email_to=%email_from%
 
 if not [%email_from%]==[] (
   echo "Creating /etc/sendmail.conf..."
-  %adb% shell "echo SMTP_FROM=%email_from%>/etc/sendmail.conf"
+  %adb% shell "echo SUBJECT_PREFIX=%subject_prefix%>/etc/sendmail.conf"
+  %adb% shell "echo SMTP_FROM=%email_from%>>/etc/sendmail.conf"
   %adb% shell "echo SMTP_USER=%email_smtp_account%>>/etc/sendmail.conf"
   %adb% shell "echo SMTP_PASS=%email_smtp_password%>>/etc/sendmail.conf"
   %adb% shell "echo SMTP_SERVER=%email_smtp_server%>>/etc/sendmail.conf"
-  %adb% shell "echo RECIPIENT=%email_to%>>/etc/sendmail.conf"
+  %adb% shell "echo SMTP_TO=%email_to%>>/etc/sendmail.conf"
 )
 echo Downloading CA cert...
 %curl% -o cacert.pem https://curl.se/ca/cacert.pem
 %adb% push cacert.pem /etc/
-%adb% push sendmail.sh /etc/
-%adb% push sms_email_forward.sh /etc/
 
 set reboot=reboot
 goto :reboot
