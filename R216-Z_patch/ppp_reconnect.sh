@@ -30,6 +30,7 @@ INTERNET_ERROR_REBOOT_AT=3 # Reboot at 3 internet errors
 HAD_ONCE_INTERNET=-1 # -1 for unknown, 0 for never had internet, 1 for internet access existed
 HAS_INTERNET=0
 CONNECTED=0
+WAS_CONNECTED=0
 # SMS check
 SMS_CHECK_SEC=15
 
@@ -37,11 +38,12 @@ NOW=$(date +%s)
 
 LAST_CYCLE=0
 LAST_CONNECT_CHECK=0
+NOT_CONNECTED_ADJUST_TIME=0
 LAST_INTERNET_CHECK=$NOW
 LAST_SMS_CHECK=$NOW
 LAST_IP_ADDRESS=
 INTERNET_ERROR=0
-REBOOT_CHECK_SEC=$(($LOOP_SLEEP_SEC + 1))
+RESUME_CHECK_SEC=$(($LOOP_SLEEP_SEC + 60))
 SEND_UPDATES=
 
 HOST="127.0.0.1"
@@ -52,10 +54,10 @@ H_CONTENTTYPE="Content-Type: application/x-www-form-urlencoded"
 check_network_status() {
   RESULT=$( echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}" )
   echo $NOW: $RESULT
-  if [[ "$RESULT" = '{"ppp_status":"ppp_disconnected"}' ]]; then
-    return 1
-  else
+  if [[ "$RESULT" = '{"ppp_status":"ppp_connected"}' ]]; then
     return 0
+  else
+    return 1
   fi
 }
 
@@ -67,11 +69,9 @@ send_update() {
   if [[ -f /etc/sendmail.sh ]] && [[ -f /etc/sendmail.conf ]]; then
     if [[ $HAS_INTERNET -eq 1 ]]; then
       sh /etc/sendmail.sh "$1" "$2"
-      if [[ $? -ne 0 ]]; then
-        SEND_UPDATES="$SEND_UPDATES|$1"
-      fi
+      return $?
     else
-      SEND_UPDATES="$SEND_UPDATES|$1"
+      return 1
     fi
   fi
 }
@@ -84,11 +84,20 @@ while [ 1 ]
 do
   sleep $LOOP_SLEEP_SEC
 
-  # Check if system was rebooted or resumed from suspension or every 2 Minutes, that connection is established
+  # Check if system was rebooted or resumed from sleep or every 2 Minutes, that connection is established
   NOW=$(date +%s)
-  if [[ $(($NOW - $LAST_CYCLE)) -gt $REBOOT_CHECK_SEC ]] || [[ $(($NOW - $LAST_CONNECT_CHECK)) -gt $CONNECT_CHECK_SEC ]]; then
+  if [[ $(($NOW - $LAST_CYCLE)) -gt $RESUME_CHECK_SEC ]] || [[ $(($NOW - $LAST_CONNECT_CHECK)) -gt $CONNECT_CHECK_SEC ]]; then
+    if [[ $(($NOW - $LAST_CYCLE)) -gt $RESUME_CHECK_SEC ]] && [[ $LAST_CYCLE -gt 0 ]]; then
+      # device was resumed, adjust some variables for early notifications
+      msg="$NOW: Device resumed"
+      echo $msg
+      queue_send_update "$msg"
+      CONNECTED=0
+      LAST_INTERNET_CHECK=$NOW
+    fi
     # Check network
     NOT_CONNECTED_ADJUST_TIME=0
+    WAS_CONNECTED=$CONNECTED
     if ! check_network_status; then
       CONNECTED=0
       # Connect network
@@ -109,15 +118,18 @@ do
     else
       CONNECTED=1
     fi
-    LAST_CONNECT_CHECK=$(($NOW - $NOT_CONNECTED_ADJUST_TIME))
+    NOW=$(date +%s)
+    LAST_CONNECT_CHECK=1
   fi
 
   # check internet and reboot if failing multiple times
-  if ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -ne 0 ]]) || ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_LONG_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -eq 0 ]]); then
+  if [[ $CONNECTED -gt $WAS_CONNECTED ]] || ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -ne 0 ]]) || ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_LONG_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -eq 0 ]]); then
+    WAS_CONNECTED=$CONNECTED
     HAS_INTERNET=0
     if [[ $HAD_ONCE_INTERNET -lt 0 ]]; then HAD_ONCE_INTERNET=0; fi
     MY_IP=$(wget -q -T 5 -O - $MYIP_SITE 2>/dev/null)
-    LAST_INTERNET_CHECK=$NOW
+    NOW=$(date +%s)
+    LAST_INTERNET_CHECK=1
     if [[ ${#MY_IP} -eq 0 ]]; then
       msg="$NOW: My ip address not available using $MYIP_SITE"
       echo $msg
@@ -129,11 +141,13 @@ do
         echo $NOW: Internet connection error count: $INTERNET_ERROR
       else
         echo $NOW: Internet verified using $ALT_SITE
+        MY_IP=$(wget -q -T 5 -O - $MYIP_SITE 2>/dev/null)
         INTERNET_ERROR=0
         HAD_ONCE_INTERNET=1
         HAS_INTERNET=1
       fi
-    else
+    fi
+    if [[ ${#MY_IP} -gt 0 ]]; then
       echo $NOW: My ip address: $MY_IP
       INTERNET_ERROR=0
       HAD_ONCE_INTERNET=1
@@ -150,12 +164,14 @@ do
       msg="$NOW: Rebooting system..."
       echo $msg
       reboot
+      exit
     fi
   fi
   
   if [[ $HAS_INTERNET -eq 1 ]] && [[ $(($NOW - $LAST_SMS_CHECK)) -gt $SMS_CHECK_SEC ]] && [[ -f /etc/sms_email_forward.sh ]] && [[ -f /etc/sendmail.conf ]]; then
     sh /etc/sms_email_forward.sh
-    LAST_SMS_CHECK=$NOW
+    NOW=$(date +%s)
+    LAST_SMS_CHECK=1
   fi
 
   # check sending updates
@@ -177,14 +193,28 @@ do
   done
   if [[ $I -gt 0 ]]; then
     if [[ $I -eq 1 ]]; then
-      send_update "$BODY" "$BODY"
+      if ! send_update "$BODY" "$BODY"; then
+        SEND_UPDATES="$updates"
+      fi
     else
-      send_update "Multiple notifications" "$BODY"
+      if ! send_update "Multiple notifications" "$BODY"; then
+        SEND_UPDATES="$updates"
+      fi
     fi
   fi
-  
   IFS="$OFS"
   
+  # handle timeouts
+  NOW=$(date +%s)
+  if [[ $LAST_CONNECT_CHECK -eq 1 ]]; then
+    LAST_CONNECT_CHECK=$(($NOW - $NOT_CONNECTED_ADJUST_TIME))
+  fi
+  if [[ $LAST_INTERNET_CHECK -eq 1 ]]; then
+    LAST_INTERNET_CHECK=$NOW
+  fi
+  if [[ $LAST_SMS_CHECK -eq 1 ]]; then
+    LAST_SMS_CHECK=$NOW
+  fi
   LAST_CYCLE=$NOW
 
 done
