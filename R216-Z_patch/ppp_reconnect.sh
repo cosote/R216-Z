@@ -51,16 +51,6 @@ H_HOST="Host: $HOST"
 H_REFERER="Referer: http://$HOST/home.htm"
 H_CONTENTTYPE="Content-Type: application/x-www-form-urlencoded"
 
-check_network_status() {
-  RESULT=$( echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}" )
-  echo $NOW: $RESULT
-  if [[ "$RESULT" = '{"ppp_status":"ppp_connected"}' ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
 queue_send_update() {
   SEND_UPDATES="$SEND_UPDATES|$1"
 }
@@ -73,6 +63,17 @@ send_update() {
     else
       return 1
     fi
+  fi
+}
+
+check_network_status() {
+  RESULT=$( echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}" )
+  msg="$NOW: $RESULT"
+  echo $msg
+  if [[ $(echo "$RESULT" | grep '{"ppp_status":".*_connected"}') ]]; then
+    return 0
+  else
+    return 1
   fi
 }
 
@@ -156,6 +157,9 @@ do
         queue_send_update "$NOW: New IP address assigned: $MY_IP"
       fi
       LAST_IP_ADDRESS=$MY_IP
+      # Enable local SSH
+      iptables -D INPUT -p tcp --dport 22 -j DROP
+      iptables -D INPUT -p udp --dport 22 -j DROP
     fi
     if [[ $INTERNET_ERROR -ge $INTERNET_ERROR_REBOOT_AT ]]; then
       # reboot system
