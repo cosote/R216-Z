@@ -45,6 +45,7 @@ LAST_IP_ADDRESS=
 INTERNET_ERROR=0
 RESUME_CHECK_SEC=$(($LOOP_SLEEP_SEC + 60))
 SEND_UPDATES=
+IPTABLES=0 # Enable local SSH at 3rd cycle, set to 3 to disable SSH enablement
 
 HOST="127.0.0.1"
 H_HOST="Host: $HOST"
@@ -157,9 +158,6 @@ do
         queue_send_update "$NOW: New IP address assigned: $MY_IP"
       fi
       LAST_IP_ADDRESS=$MY_IP
-      # Enable local SSH
-      iptables -D INPUT -p tcp --dport 22 -j DROP
-      iptables -D INPUT -p udp --dport 22 -j DROP
     fi
     if [[ $INTERNET_ERROR -ge $INTERNET_ERROR_REBOOT_AT ]]; then
       # reboot system
@@ -207,6 +205,14 @@ do
     fi
   fi
   IFS="$OFS"
+
+  if [[ $IPTABLES -lt 3 ]]; then
+    IPTABLES=$(($IPTABLES + 1))
+    if [[ $IPTABLES -ge 3 ]]; then
+      iptables -D INPUT -p tcp --dport 22 -j DROP
+      iptables -D INPUT -p udp --dport 22 -j DROP
+    fi
+  fi
   
   # handle timeouts
   NOW=$(date +%s)

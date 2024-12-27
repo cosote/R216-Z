@@ -2,9 +2,10 @@
 set device=MF910_ZTED000000
 set adb=adb\adb.exe -s %device%
 set curl=curl\curl.exe
+set plink=putty\plink.exe
 set connect_mode=plink
-rem plink root@192.168.0.1 -pw zte9x15 < startdui.sh "cat > /usr/ui/startdui.sh"
-
+rem TODO use plink if SSH is available... migrate batch to powershell with linux support
+rem %plink% root@192.168.0.1 -pw zte9x15 < ppp_reconnect.sh "cat > /etc/ppp_reconnect.sh"
 
 rem If not starting adb server first, the devices -l command might hang...
 %adb% start-server
