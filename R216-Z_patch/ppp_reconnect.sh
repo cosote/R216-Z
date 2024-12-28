@@ -69,16 +69,17 @@ send_update() {
 
 check_network_status() {
   RESULT=$( echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}" )
-  msg="$NOW: $RESULT"
-  echo $msg
-  if [[ $(echo "$RESULT" | grep '{"ppp_status":".*_connected"}') ]]; then
-    return 0
-  else
-    return 1
-  fi
+  echo "$RESULT" | sed -n 's/{"ppp_status":"ppp_\(.*\)"}/\1/p'
+  #msg="$NOW: $RESULT"
+  #echo $msg
+  #if [[ $(echo "$RESULT" | grep '{"ppp_status":".*_connected"}') ]]; then
+  #  return 0
+  #else
+  #  return 1
+  #fi
 }
 
-msg="$NOW: Running $0"
+msg="$(date +%s): Running $0"
 echo $msg
 queue_send_update "$msg"
 
@@ -91,7 +92,7 @@ do
   if [[ $(($NOW - $LAST_CYCLE)) -gt $RESUME_CHECK_SEC ]] || [[ $(($NOW - $LAST_CONNECT_CHECK)) -gt $CONNECT_CHECK_SEC ]]; then
     if [[ $(($NOW - $LAST_CYCLE)) -gt $RESUME_CHECK_SEC ]] && [[ $LAST_CYCLE -gt 0 ]]; then
       # device was resumed, adjust some variables for early notifications
-      msg="$NOW: Device resumed"
+      msg="$(date +%s): Device resumed"
       echo $msg
       queue_send_update "$msg"
       CONNECTED=0
@@ -100,49 +101,54 @@ do
     # Check network
     NOT_CONNECTED_ADJUST_TIME=0
     WAS_CONNECTED=$CONNECTED
-    if ! check_network_status; then
+    PPP_STATUS=$(check_network_status)
+    if [[ "$PPP_STATUS" != "connected" ]]; then
       CONNECTED=0
       # Connect network
       # NOTE: Occasionally it may return "{"result":"success"}" but is not true!
       BODY="goformId=CONNECT_NETWORK"
       RESULT=$( echo -ne "POST /goform/goform_set_cmd_process HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\nContent-Length: ${#BODY}\n\n${BODY}" | nc $HOST 80 | grep -o "{.*}" )
-      msg="$NOW: Connect command result: $RESULT"
+      msg="$(date +%s): PPP status is $PPP_STATUS, reconnecting..."
       echo $msg
       queue_send_update "$msg"
+      sleep 3
       # So, Re-check network status
-      if check_network_status; then
+      PPP_STATUS=$(check_network_status)
+      if [[ "$PPP_STATUS" == "connected" ]]; then
         CONNECTED=1
       else
         CONNECTED=0
         # check again on next cycle
         NOT_CONNECTED_ADJUST_TIME=$(($CONNECT_CHECK_SEC - 1))
       fi
+      msg="$(date +%s): PPP status is $PPP_STATUS"
+      echo $msg
+      queue_send_update "$msg"
     else
       CONNECTED=1
     fi
-    NOW=$(date +%s)
     LAST_CONNECT_CHECK=1
   fi
 
   # check internet and reboot if failing multiple times
+  NOW=$(date +%s)
   if [[ $CONNECTED -gt $WAS_CONNECTED ]] || ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -ne 0 ]]) || ([[ $(($NOW - $LAST_INTERNET_CHECK)) -gt $INTERNET_LONG_CHECK_SEC ]] && [[ $HAD_ONCE_INTERNET -eq 0 ]]); then
     WAS_CONNECTED=$CONNECTED
     HAS_INTERNET=0
     if [[ $HAD_ONCE_INTERNET -lt 0 ]]; then HAD_ONCE_INTERNET=0; fi
     MY_IP=$(wget -q -T 5 -O - $MYIP_SITE 2>/dev/null)
-    NOW=$(date +%s)
     LAST_INTERNET_CHECK=1
     if [[ ${#MY_IP} -eq 0 ]]; then
-      msg="$NOW: My ip address not available using $MYIP_SITE"
+      msg="$(date +%s): My ip address not available using $MYIP_SITE"
       echo $msg
       queue_send_update "$msg"
       # no IP received, check google.com
       TEST_INTERNET=$(wget -q -T 5 -O - $ALT_SITE 2>/dev/null)
       if [[ ${#TEST_INTERNET} -eq 0 ]]; then
         INTERNET_ERROR=$((INTERNET_ERROR + 1))
-        echo $NOW: Internet connection error count: $INTERNET_ERROR
+        echo "$(date +%s): Internet connection error count: $INTERNET_ERROR"
       else
-        echo $NOW: Internet verified using $ALT_SITE
+        echo "$(date +%s): Internet verified using $ALT_SITE"
         MY_IP=$(wget -q -T 5 -O - $MYIP_SITE 2>/dev/null)
         INTERNET_ERROR=0
         HAD_ONCE_INTERNET=1
@@ -150,12 +156,12 @@ do
       fi
     fi
     if [[ ${#MY_IP} -gt 0 ]]; then
-      echo $NOW: My ip address: $MY_IP
+      echo "$(date +%s): My ip address: $MY_IP"
       INTERNET_ERROR=0
       HAD_ONCE_INTERNET=1
       HAS_INTERNET=1
       if ! [[ "$LAST_IP_ADDRESS" = "$MY_IP" ]]; then
-        queue_send_update "$NOW: New IP address assigned: $MY_IP"
+        queue_send_update "$(date +%s): New IP address assigned: $MY_IP"
       fi
       LAST_IP_ADDRESS=$MY_IP
     fi
@@ -163,16 +169,16 @@ do
       # reboot system
       INTERNET_ERROR=0
       HAS_INTERNET=0
-      msg="$NOW: Rebooting system..."
+      msg="$(date +%s): Rebooting system..."
       echo $msg
       reboot
       exit
     fi
   fi
   
+  NOW=$(date +%s)
   if [[ $HAS_INTERNET -eq 1 ]] && [[ $(($NOW - $LAST_SMS_CHECK)) -gt $SMS_CHECK_SEC ]] && [[ -f /etc/sms_email_forward.sh ]] && [[ -f /etc/sendmail.conf ]]; then
     sh /etc/sms_email_forward.sh
-    NOW=$(date +%s)
     LAST_SMS_CHECK=1
   fi
 
@@ -188,6 +194,7 @@ do
       I=$((I + 1))
       if [[ $I -gt 1 ]]; then
         BODY="$BODY"$'\n'"$msg"
+        LAST_MSG="$msg"
       else
         BODY="$msg"
       fi
@@ -199,7 +206,7 @@ do
         SEND_UPDATES="$updates"
       fi
     else
-      if ! send_update "Multiple notifications" "$BODY"; then
+      if ! send_update "$LAST_MSG" "$BODY"; then
         SEND_UPDATES="$updates"
       fi
     fi
