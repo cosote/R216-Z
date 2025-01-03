@@ -68,8 +68,8 @@ send_update() {
 }
 
 check_network_status() {
-  RESULT=$( echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}" )
-  echo "$RESULT" | sed -n 's/{"ppp_status":"ppp_\(.*\)"}/\1/p'
+  RESULT=$(echo -ne "GET /goform/goform_get_cmd_process?cmd=ppp_status HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\n\n" | nc $HOST 80 | grep -o "{.*}")
+  echo "$RESULT" | sed -n 's/{"ppp_status":".*_\(connected\|disconnected\|connecting\)"}/\1/p'
   #msg="$NOW: $RESULT"
   #echo $msg
   #if [[ $(echo "$RESULT" | grep '{"ppp_status":".*_connected"}') ]]; then
@@ -102,16 +102,15 @@ do
     NOT_CONNECTED_ADJUST_TIME=0
     WAS_CONNECTED=$CONNECTED
     PPP_STATUS=$(check_network_status)
-    if [[ "$PPP_STATUS" != "connected" ]]; then
+    if ! [[ -z "$PPP_STATUS" ]] && [[ "$PPP_STATUS" != "connected" ]] && [[ "$PPP_STATUS" != "connecting" ]]; then
       CONNECTED=0
       # Connect network
-      # NOTE: Occasionally it may return "{"result":"success"}" but is not true!
       BODY="goformId=CONNECT_NETWORK"
       RESULT=$( echo -ne "POST /goform/goform_set_cmd_process HTTP/1.0\n$H_HOST\n$H_REFERER\n$H_CONTENTTYPE\nContent-Length: ${#BODY}\n\n${BODY}" | nc $HOST 80 | grep -o "{.*}" )
       msg="$(date +%s): PPP status is $PPP_STATUS, reconnecting..."
       echo $msg
       queue_send_update "$msg"
-      sleep 3
+      sleep 5
       # So, Re-check network status
       PPP_STATUS=$(check_network_status)
       if [[ "$PPP_STATUS" == "connected" ]]; then
