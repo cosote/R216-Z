@@ -101,8 +101,10 @@ if not [%email_from%]==[] (
   %adb% shell "echo SMTP_SERVER=%email_smtp_server%>>/etc/sendmail.conf"
   %adb% shell "echo SMTP_TO=%email_to%>>/etc/sendmail.conf"
 )
-echo Downloading CA cert...
-%curl% -o cacert.pem https://curl.se/ca/cacert.pem
+if not exist cacert.pem (
+  echo Downloading CA cert...
+  %curl% -o cacert.pem https://curl.se/ca/cacert.pem
+) 
 %adb% push cacert.pem /etc/
 
 set reboot=reboot
@@ -138,6 +140,7 @@ echo Remove patch from R216-Z...
 %adb% shell if [ -f "/etc/sms_email_forward.sh" ]; then rm /etc/sms_email_forward.sh; fi
 %adb% shell if [ -f "/etc/sendmail.sh" ]; then rm /etc/sendmail.sh; fi
 %adb% shell if [ -f "/etc/sendmail.conf" ]; then rm /etc/sendmail.conf; fi
+%adb% shell if [ -f "/etc/cacert.pem" ]; then rm /etc/cacert.pem; fi
 %adb% shell if [ -f "/etc/apn_list_update.sh" ]; then rm /etc/apn_list_update.sh; fi
 %adb% shell if [ -f "/usr/zte_web/web/auto_apn/auto_apn_backup.db" ]; then cp /usr/zte_web/web/auto_apn/auto_apn_backup.db /usr/zte_web/web/auto_apn/auto_apn.db;rm /usr/zte_web/web/auto_apn/auto_apn_backup.db; fi
 set reboot=remove
